@@ -35,11 +35,25 @@ class Server:
         self.thread.run()
 
 
+def example_function(i=1):
+    print('I am doing a thing')
+    print('Now I am doing another thing')
+    print(f'now I shall display the argument i {i} and its default value is 1 if you don\'t pass any value to it')
+
+
 class Client:
-    def example_function(self, i=1):
-        print('I am doing a thing')
-        print('Now I am doing another thing')
-        print(f'now I shall display the argument i {i} and its default value is 1 if you don\'t pass any value to it')
+
+    def listen_for_messages(self):
+        # listens for messages from the server and prints them to the console
+        while True:
+            message = self.s.recv(1024).decode()
+            print("\n" + message)
+    # make a thread that listens for messages to this client & print them
+    t = Thread(target=listen_for_messages)
+    # make the thread daemon so it ends whenever the main thread ends
+    t.daemon = True
+    # start the thread
+    t.start()
 
     def __init__(self, port):
         self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
