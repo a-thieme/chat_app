@@ -5,6 +5,6 @@ if __name__ == '__main__':
     print('client initialize')
     client = Client(port)
     print('client send')
-    client.send(str([i for i in range(100000)]))
+    client.send('oihmy_username')
 
     client.close()

@@ -20,10 +20,7 @@ def do_server(port):
     server.run()
 
 
-def main():
-    port = 17001
-    do_server(port)
-
-
 if __name__ == '__main__':
-    main()
+    port = 17001
+    server = Server(port)
+    server.run()

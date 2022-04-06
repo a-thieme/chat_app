@@ -13,15 +13,36 @@ class Client:
         # # start the thread
         # t.start()
 
-    def listen_for_messages(self):
-        # listens for messages from the server and prints them to the console
-        while True:
-            message = self.s.recv(1024).decode()
-            print("\n" + message)
+    def start(self):
+        # todo: these need to be threaded
+        self.send('init', self.s)
+        self.listen_for_messages(self.s)
+        self.send_loop(self.s)
 
-    def send(self, message):
+    def listen_for_messages(self, s):
+        # listens for messages from the server and prints them to the console
+        message = 'placeholder'
+        out = []
+        while message != '':
+            message = s.recv(1024).decode('utf-8')
+            out.append(message)
+        message = ''.join(out)
+        print("\n" + message)
+        if message == 'END':
+            self.close()
+        elif message.startswith('connection'):
+            # connection port
+            new_socket = "port at " + message.split(' ')[1]
+            self.listen_for_messages(new_socket)
+            self.send_loop(new_socket)
+
+    def send_loop(self, sock):
+        while True:
+            sock.send(input('send message: '))
+
+    def send(self, message, s):
         message = message.encode('utf-8')
-        self.s.send(message)
+        s.send(message)
 
     def close(self):
         self.s.close()
