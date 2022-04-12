@@ -1,60 +1,9 @@
-import socket
-from threading import Thread
 import pandas as pd
+from Server import Server
+from Client import Client
 
 
-def deal_with_client(c_sock):
-    out = []
-    r = 'placeholder'
-    segments = 1
-    while r != '':
-        r = c_sock.recv(4000)
-        r = r.decode('utf-8')
-        out.append(r)
-        segments += 1
-
-    print(''.join(out))
-    print(f'segments={segments}')
-
-
-class Server:
-    def __init__(self, port, connections=5):
-        self.thread = None
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.bind(('', port))
-        self.s.listen(connections)
-
-    def server_loop(self):
-        while True:
-            c_sock, addr = self.s.accept()
-            t = Thread(target=deal_with_client(c_sock))
-            t.run()
-
-    def run(self):
-        self.thread = Thread(target=self.server_loop())
-        self.thread.run()
-
-
-class Client:
-    def example_function(self, i=1):
-        print('I am doing a thing')
-        print('Now I am doing another thing')
-        print(f'now I shall display the argument i {i} and its default value is 1 if you don\'t pass any value to it')
-
-    def __init__(self, port):
-        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.s.connect(('localhost', port))
-
-    def send(self, message):
-        message = message.encode('utf-8')
-        self.s.send(message)
-
-    def close(self):
-        self.s.close()
-
-
-def main():
-    port = 17001
+def do_client(port):
     print('client initialize')
     client = Client(port)
     print('client send')
@@ -66,5 +15,12 @@ def main():
     client.close()
 
 
+def do_server(port):
+    server = Server(port)
+    server.run()
+
+
 if __name__ == '__main__':
-    main()
+    port = 17001
+    server = Server(port)
+    server.run()
