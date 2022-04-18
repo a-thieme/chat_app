@@ -21,6 +21,7 @@ client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
 client.connect(ADDR)
 
+
 # This will allow us to send messages
 def send(msg):
     message = msg.encode(FORMAT)

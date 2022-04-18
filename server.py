@@ -24,8 +24,7 @@ server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 # Binds the socket to the server address
 server.bind(ADDR)
 
-SOCKET_LIST = []
-SOCKET_LIST.append(server)
+SOCKET_LIST = [server]
 
 
 # Handles all communication between server and client
@@ -46,7 +45,9 @@ def handle_client(conn, addr):
 
     conn.close()
 
-# Starts the server socket and listens for connections and handles the connections and then passing them to handle_client()
+
+# Starts the server socket and listens for connections and handles the connections and then passing them to
+# handle_client()
 def start():
     server.listen()
     while True:
@@ -54,6 +55,7 @@ def start():
         thread = threading.Thread(target=handle_client, args=(conn, addr))
         thread.start()
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+
 
 print("Welcome! Server is starting now!")
 start()
