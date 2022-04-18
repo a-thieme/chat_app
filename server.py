@@ -1,22 +1,8 @@
 import select
 import socket
 import threading
+from common import *
 
-# Our header is 64 bytes
-HEADER = 64
-
-PORT = 5050
-
-# This gets the local IPv4 address automatically without hard-coding it into the app
-SERVER = socket.gethostbyname(socket.gethostname())
-
-ADDR = (SERVER, PORT)
-
-FORMAT = 'utf-8'
-
-# This is the message that we send whenever we are ready to disconnect.
-# Whenever this message is disconnected, the server will close the connection from said client.
-DISCONNECT_MESSAGE = ".exit"
 
 SOCKET_LIST = []
 
@@ -27,15 +13,11 @@ def handle_client(conn, addr):
 
     connected = True
     while connected:
-        msg_length = conn.recv(HEADER).decode()
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
+        response = receive(conn)
+        if response:
+            if response == DISCONNECT_MESSAGE:
                 connected = False
-
-            print(f"[{addr}] {msg}")
-            conn.send("Message received".encode(FORMAT))
+            print(response)
 
     conn.close()
 
