@@ -37,27 +37,22 @@ class Yummy:
     def __init__(self):
         # generation of a socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.bind(ADDR)
+        self.listen()
+
+    def send(self, msg, s=None):
+        if s is None:
+            send(msg, self.sock)
+        else:
+            send(msg, s)
 
     def listen(self):
-        self.sock.listen()
-        while True:
-            conn, addr = self.sock.accept()
-            thread = threading.Thread(target=self.handle_connection, args=(conn, addr))
-            thread.start()
+        return
 
-    def handle_connection(self, conn, addr):
-        connected = True
-        while connected:
-            response = receive(conn)
-            if response:
-                if response == DISCONNECT_MESSAGE:
-                    conn.close()
-                    connected = False
-                else:
-                    self.callback(conn, addr)
+    def handle_connection(self, conn, addr=None):
 
-    def callback(self, conn, addr):
+        return
+
+    def callback(self, conn, message, addr=None):
 
         return
 
