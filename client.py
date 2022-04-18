@@ -51,4 +51,5 @@ class Client(Yummy):
 
 
 if __name__ == '__main__':
+    print("Welcome to the ChatApp!")
     y = Client()

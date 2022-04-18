@@ -99,5 +99,4 @@ class Server(Yummy):
 
 if __name__ == '__main__':
     print("Welcome! Server is starting now!")
-    # start()
     Server()
