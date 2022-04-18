@@ -16,18 +16,25 @@ SERVER = socket.gethostbyname(socket.gethostname())
 
 ADDR = (SERVER, PORT)
 
-# This is the socket for the client
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-client.connect(ADDR)
-
 
 # This will allow us to send messages
-def send(msg):
+def send(msg, conn):
     message = msg.encode(FORMAT)
     msg_length = len(message)
     send_length = str(msg_length).encode(FORMAT)
     send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(4096).decode(FORMAT))
+    conn.send(send_length)
+    conn.send(message)
+    print(conn.recv(4096).decode(FORMAT))
+
+
+def start():
+    # This is the socket for the client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    client.connect(ADDR)
+    send("test message", client)
+
+
+if __name__ == '__main__':
+    start()

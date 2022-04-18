@@ -18,13 +18,7 @@ FORMAT = 'utf-8'
 # Whenever this message is disconnected, the server will close the connection from said client.
 DISCONNECT_MESSAGE = ".exit"
 
-# This will generate a socket that will the server to connect to the client(s)
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Binds the socket to the server address
-server.bind(ADDR)
-
-SOCKET_LIST = [server]
+SOCKET_LIST = []
 
 
 # Handles all communication between server and client
@@ -49,6 +43,13 @@ def handle_client(conn, addr):
 # Starts the server socket and listens for connections and handles the connections and then passing them to
 # handle_client()
 def start():
+    # This will generate a socket that will the server to connect to the client(s)
+    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+    # Binds the socket to the server address
+    server.bind(ADDR)
+    SOCKET_LIST.append(server)
+
     server.listen()
     while True:
         conn, addr = server.accept()
@@ -57,5 +58,6 @@ def start():
         print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
 
 
-print("Welcome! Server is starting now!")
-start()
+if __name__ == '__main__':
+    print("Welcome! Server is starting now!")
+    start()
