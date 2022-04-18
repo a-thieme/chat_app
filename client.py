@@ -1,32 +1,55 @@
-import socket
+from common import *
+import threading
 
-# Our header is 64 bytes
-HEADER = 64
 
-PORT = 5050
+def start():
+    # This is the socket for the client
+    client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    client.connect(ADDR)
+    send(".exit", client)
 
-FORMAT = 'utf-8'
 
-# This is the message that we send whenever we are ready to disconnect.
-# Whenever this message is disconnected, the server will close the connection from said client.
-DISCONNECT_MESSAGE = ".exit"
+class Client(Yummy):
+    def __init__(self):
+        super().__init__()
 
-# This gets the local IPv4 address automatically without hard-coding it into the app
-SERVER = socket.gethostbyname(socket.gethostname())
+    def handle_connection(self, conn, addr=None):
+        friends = ['SERVER']
+        while True:
+            try:
+                message = receive(conn)
+            except ConnectionResetError:
+                break
+            if message:
+                if message == DISCONNECT_MESSAGE:
+                    print('You have disconnected. Please press ENTER to finish.')
+                    break
+                if '[SERVER]: You are now talking' in message:
+                    message = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
+                    friends = ['SERVER'] + (message.split(', '))
+                if message.startswith('['):
+                    sender_id = message.split('[')[1].split(']')[0]
+                    if sender_id in friends:
+                        print(f'{message}')
+                    else:
+                        print(f'{sender_id} wants to talk....')
 
-ADDR = (SERVER, PORT)
+        exit()
 
-# This is the socket for the client
-client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    def listen(self):
+        self.sock.connect(ADDR)
+        t = threading.Thread(target=self.handle_connection, args=[self.sock])
+        t.start()
+        while True:
+            try:
+                out = input('')
+                self.send(out)
+            except ConnectionAbortedError:
+                break
+            except ValueError:
+                break
 
-client.connect(ADDR)
 
-# This will allow us to send messages
-def send(msg):
-    message = msg.encode(FORMAT)
-    msg_length = len(message)
-    send_length = str(msg_length).encode(FORMAT)
-    send_length += b' ' * (HEADER - len(send_length))
-    client.send(send_length)
-    client.send(message)
-    print(client.recv(4096).decode(FORMAT))
+if __name__ == '__main__':
+    print("Welcome to the ChatApp!")
+    Client()

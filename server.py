@@ -1,59 +1,102 @@
-import select
-import socket
+from random import randint
+from common import *
 import threading
 
-# Our header is 64 bytes
-HEADER = 64
-
-PORT = 5050
-
-# This gets the local IPv4 address automatically without hard-coding it into the app
-SERVER = socket.gethostbyname(socket.gethostname())
-
-ADDR = (SERVER, PORT)
-
-FORMAT = 'utf-8'
-
-# This is the message that we send whenever we are ready to disconnect.
-# Whenever this message is disconnected, the server will close the connection from said client.
-DISCONNECT_MESSAGE = ".exit"
-
-# This will generate a socket that will the server to connect to the client(s)
-server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-# Binds the socket to the server address
-server.bind(ADDR)
-
-SOCKET_LIST = []
-SOCKET_LIST.append(server)
+conns_dict = {'-1': ''}
 
 
-# Handles all communication between server and client
-def handle_client(conn, addr):
-    print(f"[NEW CONNECTIONS] {addr} connected.")
+def create_id():
+    r = -1
+    x = 2
+    while r < 1 or str(r) in conns_dict:
+        r = randint(0, x)
+        x *= 2
+    return str(r)
 
-    connected = True
-    while connected:
-        msg_length = conn.recv(HEADER).decode()
-        if msg_length:
-            msg_length = int(msg_length)
-            msg = conn.recv(msg_length).decode(FORMAT)
-            if msg == DISCONNECT_MESSAGE:
-                connected = False
 
-            print(f"[{addr}] {msg}")
-            conn.send("Message received".encode(FORMAT))
+class Server(Yummy):
+    def __init__(self):
+        super().__init__()
 
-    conn.close()
+    def listen(self):
+        self.sock.bind(ADDR)
+        self.sock.listen()
+        while True:
+            conn, addr = self.sock.accept()
+            thread = threading.Thread(target=self.handle_connection, args=(conn, addr))
+            thread.start()
 
-# Starts the server socket and listens for connections and handles the connections and then passing them to handle_client()
-def start():
-    server.listen()
-    while True:
-        conn, addr = server.accept()
-        thread = threading.Thread(target=handle_client, args=(conn, addr))
-        thread.start()
-        print(f"[ACTIVE CONNECTIONS] {threading.active_count() - 1}")
+    def send_list(self):
+        for person in conns_dict:
+            if person == '-1':
+                continue
+            tmp = ''
+            for key in conns_dict:
+                if key != person:
+                    tmp += str(key) + '\n'
+            if tmp != '':
+                self.send(f'[SERVER]: Updated available connections as IDs:\n{tmp}', conns_dict[person])
 
-print("Welcome! Server is starting now!")
-start()
+    def handle_connection(self, conn, addr=None):
+        print(f"[NEW CONNECTIONS] {addr} connected.")
+        conn_id = create_id()
+        conns_dict[conn_id] = conn
+        print(f'[ID GENERATED]: {conn_id} for {addr}')
+        self.send(f'[SERVER]: Your ID is {conn_id}.', conn)
+        self.send('[SERVER]: To make a new connection, use "add <id>"\n[SERVER]: To remove an existing connection, '
+                  'use "del '
+                  '<id>.\n[SERVER]: To '
+                  'exit, enter ".exit"', conn)
+        self.send('[SERVER]: ID -1 is the chat room', conn)
+        self.send_list()
+        talking_to = []
+        while True:
+            try:
+                message = receive(conn)
+            except ConnectionResetError:
+                break
+            if message:
+                if message == DISCONNECT_MESSAGE:
+                    try:
+                        send(DISCONNECT_MESSAGE, conn)
+                        del conns_dict[conn_id]
+                        print(f'[CONNECTION REMOVED]: {conn_id}')
+                        self.send_list()
+                        conn.close()
+                    except:
+                        'placeholder'
+                    break
+                if message.startswith('add '):
+                    maybe = message.split('add ')[1]
+                    if maybe in conns_dict:
+                        talking_to.append(maybe)
+                        talking_to = list(set(talking_to))
+                        self.send(f'[SERVER]: You are now talking in/to ID(s) {talking_to}.', conn)
+                    else:
+                        self.send('[SERVER]: twas not a valid ID', conn)
+                elif message.startswith('del '):
+                    maybe = message.split('del ')[1]
+                    if maybe in talking_to:
+                        talking_to.remove(maybe)
+                        self.send(f'[SERVER]: You are now talking in/to ID(s) {talking_to}.', conn)
+                    else:
+                        self.send('[SERVER]: twas not a valid ID', conn)
+                else:
+                    for person in talking_to:
+                        if person != '-1':
+                            try:
+                                self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
+                            except KeyError:
+                                talking_to.remove(person)
+                        else:
+                            for user in conns_dict:
+                                if user != '-1' and user != conn_id:
+                                    self.send(f'[-1][{conn_id}]:\t{message}', conns_dict[user])
+
+                    if len(talking_to) == 0:
+                        self.send('[SERVER]: maybe try adding a connection before trying to send a message', conn)
+
+
+if __name__ == '__main__':
+    print("Welcome! Server is starting now!")
+    Server()
