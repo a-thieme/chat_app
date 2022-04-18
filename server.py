@@ -39,15 +39,15 @@ class Server(Yummy):
                 if key != person:
                     tmp += str(key) + '\n'
             if tmp != '':
-                self.send(f'Updated available connections as IDs:\n{tmp}', conns_dict[person])
+                self.send(f'[SERVER]: Updated available connections as IDs:\n{tmp}', conns_dict[person])
 
     def handle_connection(self, conn, addr=None):
         print(f"[NEW CONNECTIONS] {addr} connected.")
         conn_id = self.create_id()
         conns_dict[conn_id] = conn
         print(f'[ID GENERATED]: {conn_id} for {addr}')
-        self.send(f'Your ID is {conn_id}.', conn)
-        self.send('To make a new connection, use "add <id>"\nTo remove an existing connection, use "del <id>.\nTo '
+        self.send(f'[SERVER]: Your ID is {conn_id}.', conn)
+        self.send('[SERVER]: To make a new connection, use "add <id>"\nTo remove an existing connection, use "del <id>.\nTo '
                   'exit, enter ".exit"', conn)
         self.send_list()
         talking_to = []
@@ -71,21 +71,24 @@ class Server(Yummy):
                     maybe = message.split('add ')[1]
                     if maybe in conns_dict:
                         talking_to.append(maybe)
-                        self.send(f'You are now talking in/to ID(s) {talking_to}.', conn)
+                        self.send(f'[SERVER]: You are now talking in/to ID(s) {talking_to}.', conn)
                     else:
-                        self.send('twas not a valid ID', conn)
+                        self.send('[SERVER]: twas not a valid ID', conn)
                 elif message.startswith('del '):
                     maybe = message.split('del ')[1]
                     if maybe in talking_to:
                         talking_to.remove(maybe)
-                        self.send(f'You are now talking in/to ID(s) {talking_to}.', conn)
+                        self.send(f'[SERVER]: You are now talking in/to ID(s) {talking_to}.', conn)
                     else:
-                        self.send('twas not a valid ID', conn)
+                        self.send('[SERVER]: twas not a valid ID', conn)
                 else:
                     for person in talking_to:
-                        self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
+                        try:
+                            self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
+                        except KeyError:
+                            talking_to.remove(person)
                     if len(talking_to) == 0:
-                        self.send('maybe try adding a connection before trying to send a message', conn)
+                        self.send('[SERVER]: maybe try adding a connection before trying to send a message', conn)
 
 
 if __name__ == '__main__':

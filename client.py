@@ -8,26 +8,36 @@ def start():
     send(".exit", client)
 
 
+
+
 class Client(Yummy):
     def __init__(self):
         super().__init__()
 
-    def callback(self, conn, message, addr=None):
-        if message == DISCONNECT_MESSAGE:
-            print('You have disconnected. Please press ENTER to finish.')
-            return False
-        print(f'{message}')
-        return True
-
     def handle_connection(self, conn, addr=None):
+        friends = ['SERVER']
         while True:
             try:
                 message = receive(conn)
             except ConnectionResetError:
                 break
             if message:
-                if not self.callback(conn, message):
+                if message == DISCONNECT_MESSAGE:
+                    print('You have disconnected. Please press ENTER to finish.')
                     break
+                if '[SERVER]: You are now talking' in message:
+                    message = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
+                    friends = ['SERVER'] + (message.split(', '))
+                    print(f'friends: {friends}')
+                if message.startswith('['):
+                    sender_id = message.split('[')[1].split(']')[0]
+                    print(f'friends: {friends}')
+                    print(f'send id: {sender_id}')
+                    if sender_id in friends:
+                        print(f'{message}')
+                    else:
+                        print(f'{sender_id} wants to talk....')
+
         exit()
 
     def listen(self):
