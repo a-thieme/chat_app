@@ -7,9 +7,7 @@ from random import randint
 
 from common import *
 
-SOCKET_LIST = []
-
-conns_dict = {}
+conns_dict = {'-1': ''}
 
 
 class Server(Yummy):
@@ -34,6 +32,8 @@ class Server(Yummy):
 
     def send_list(self):
         for person in conns_dict:
+            if person == '-1':
+                continue
             tmp = ''
             for key in conns_dict:
                 if key != person:
@@ -49,6 +49,7 @@ class Server(Yummy):
         self.send(f'[SERVER]: Your ID is {conn_id}.', conn)
         self.send('[SERVER]: To make a new connection, use "add <id>"\nTo remove an existing connection, use "del <id>.\nTo '
                   'exit, enter ".exit"', conn)
+        self.send('[SERVER]: ID -1 is the chat room', conn)
         self.send_list()
         talking_to = []
         while True:
@@ -83,10 +84,17 @@ class Server(Yummy):
                         self.send('[SERVER]: twas not a valid ID', conn)
                 else:
                     for person in talking_to:
-                        try:
-                            self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
-                        except KeyError:
-                            talking_to.remove(person)
+                        if person != '-1':
+                            try:
+                                self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
+                            except KeyError:
+                                talking_to.remove(person)
+                        else:
+                            print('person was n1')
+                            for user in conns_dict:
+                                if user != '-1' and user != conn_id:
+                                    self.send(f'[-1][{conn_id}]:\t{message}', conns_dict[user])
+
                     if len(talking_to) == 0:
                         self.send('[SERVER]: maybe try adding a connection before trying to send a message', conn)
 
