@@ -28,11 +28,8 @@ class Client(Yummy):
                 if '[SERVER]: You are now talking' in message:
                     message = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
                     friends = ['SERVER'] + (message.split(', '))
-                    print(f'friends: {friends}')
                 if message.startswith('['):
                     sender_id = message.split('[')[1].split(']')[0]
-                    print(f'friends: {friends}')
-                    print(f'send id: {sender_id}')
                     if sender_id in friends:
                         print(f'{message}')
                     else:
