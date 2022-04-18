@@ -1,5 +1,4 @@
 import socket
-import threading
 
 # Our header is 64 bytes
 PORT = 5050
@@ -55,4 +54,3 @@ class Yummy:
     def callback(self, conn, message, addr=None):
 
         return
-

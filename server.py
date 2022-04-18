@@ -1,13 +1,17 @@
-import select
-import socket
-import threading
-import time
-
 from random import randint
-
 from common import *
+import threading
 
 conns_dict = {'-1': ''}
+
+
+def create_id():
+    r = -1
+    x = 2
+    while r < 1 or str(r) in conns_dict:
+        r = randint(0, x)
+        x *= 2
+    return str(r)
 
 
 class Server(Yummy):
@@ -22,14 +26,6 @@ class Server(Yummy):
             thread = threading.Thread(target=self.handle_connection, args=(conn, addr))
             thread.start()
 
-    def create_id(self):
-        r = -1
-        x = 2
-        while r < 1 or str(r) in conns_dict:
-            r = randint(0, x)
-            x *= 2
-        return str(r)
-
     def send_list(self):
         for person in conns_dict:
             if person == '-1':
@@ -43,11 +39,13 @@ class Server(Yummy):
 
     def handle_connection(self, conn, addr=None):
         print(f"[NEW CONNECTIONS] {addr} connected.")
-        conn_id = self.create_id()
+        conn_id = create_id()
         conns_dict[conn_id] = conn
         print(f'[ID GENERATED]: {conn_id} for {addr}')
         self.send(f'[SERVER]: Your ID is {conn_id}.', conn)
-        self.send('[SERVER]: To make a new connection, use "add <id>"\nTo remove an existing connection, use "del <id>.\nTo '
+        self.send('[SERVER]: To make a new connection, use "add <id>"\n[SERVER]: To remove an existing connection, '
+                  'use "del '
+                  '<id>.\n[SERVER]: To '
                   'exit, enter ".exit"', conn)
         self.send('[SERVER]: ID -1 is the chat room', conn)
         self.send_list()
@@ -72,6 +70,7 @@ class Server(Yummy):
                     maybe = message.split('add ')[1]
                     if maybe in conns_dict:
                         talking_to.append(maybe)
+                        talking_to = list(set(talking_to))
                         self.send(f'[SERVER]: You are now talking in/to ID(s) {talking_to}.', conn)
                     else:
                         self.send('[SERVER]: twas not a valid ID', conn)
@@ -90,7 +89,6 @@ class Server(Yummy):
                             except KeyError:
                                 talking_to.remove(person)
                         else:
-                            print('person was n1')
                             for user in conns_dict:
                                 if user != '-1' and user != conn_id:
                                     self.send(f'[-1][{conn_id}]:\t{message}', conns_dict[user])
