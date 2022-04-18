@@ -67,7 +67,7 @@ class Server(Yummy):
                 if len(talking_to) == 0:
                     if message in conns_dict:
                         talking_to.append(conns_dict[message])
-                        self.send(f'You are now talking in/to ID {message}.', conn)
+                        self.send(f'You are now talking in/to ID(s) {talking_to}.', conn)
                     else:
                         if message == 'help':
                             self.send(DISCONNECT_MESSAGE, conn)
