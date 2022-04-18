@@ -58,6 +58,8 @@ class Server(Yummy):
                 if message == DISCONNECT_MESSAGE:
                     try:
                         send(DISCONNECT_MESSAGE, conn)
+                        del conns_dict[conn_id]
+                        print(f'[CONNECTION REMOVED]: {conn_id}')
                         conn.close()
                     except:
                         'placeholder'
@@ -65,6 +67,7 @@ class Server(Yummy):
                 if len(talking_to) == 0:
                     if message in conns_dict:
                         talking_to.append(conns_dict[message])
+                        self.send(f'You are now talking in/to ID {message}.', conn)
                     else:
                         if message == 'help':
                             self.send(DISCONNECT_MESSAGE, conn)
@@ -72,7 +75,7 @@ class Server(Yummy):
                             self.send(message, conn)
                 else:
                     for person in talking_to:
-                        self.send(message, person)
+                        self.send(f'[{conn_id}]:\t{message}', person)
 
 
 if __name__ == '__main__':
