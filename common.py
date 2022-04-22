@@ -1,8 +1,13 @@
 import socket
+from Crypto.Cipher import AES
+
+# encryption things
+BLOCK_SIZE = 16
+NONCE = 15
 
 # all of our global variables that both client and server use
 
-PORT = 5050
+PORT = 41821
 # Our header is 64 bytes
 HEADER = 64
 FORMAT = 'utf-8'
@@ -39,6 +44,10 @@ def receive(sock):
 # base networking class for client and server
 class Yummy:
     def __init__(self):
+        key = 1967
+        key = key.to_bytes(BLOCK_SIZE, 'big')
+        nonce = 15
+        self.cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
         # generation of a socket
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # listen is really like the "run" function
@@ -52,6 +61,10 @@ class Yummy:
         # send message on given socket (server)
         else:
             send(msg, s)
+
+    def send_encrypted(self, msg, s=None):
+        ciphertext = self.cipher.encrypt(msg.encode('utf-8'))
+        self.send(ciphertext, s)
 
     # these are the basic functions to be implemented/overridden by client and server, but idk if I used callback
 

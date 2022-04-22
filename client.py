@@ -1,5 +1,8 @@
+import time
+
 from common import *
 import threading
+from random import randint
 
 
 def start():
@@ -10,13 +13,23 @@ def start():
 
 
 class Client(Yummy):
+    cipher = None
+    my_key = -1
+
     def __init__(self):
+        key = 1967
+        key = key.to_bytes(BLOCK_SIZE, 'big')
+        nonce = 15
+        self.cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
         super().__init__()
 
     # client just has one listening loop since it's only one connection to the server
     def handle_connection(self, conn, addr=None):
         # friends are the people who you are ok with seeing messages from
         friends = ['SERVER']
+        prime = -1
+        root = -1
+        keys = {}
         while True:
             try:
                 message = receive(conn)
@@ -45,6 +58,7 @@ class Client(Yummy):
                     # if the id was one we added, it'll show message, otherwise say that user wants to talk
                     if sender_id in friends:
                         print(f'{message}')
+                        # print(f'{self.cipher.decrypt(message)}')
                     else:
                         print(f'{sender_id} wants to talk....')
 
@@ -63,9 +77,13 @@ class Client(Yummy):
             try:
                 out = input('')
                 self.send(out)
+                time.sleep(1)
+                self.send_encrypted(out)
             except ConnectionAbortedError:
                 break
             except ValueError:
+                break
+            except:
                 break
 
 

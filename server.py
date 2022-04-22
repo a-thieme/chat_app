@@ -3,6 +3,11 @@ from common import *
 import threading
 
 conns_dict = {'-1': ''}
+key_dict = {}
+
+# dh stuff
+prime = 3637
+root = 202
 
 
 # create unique id that is greater than 0
