@@ -1,11 +1,14 @@
 import socket
 
-# all of our global variables that both client and server use
+from Crypto.Cipher import AES
 
-PORT = 5050
+# all of our global variables that both client and server use
+BLOCK_SIZE = 16
+
+PORT = 5060
 # Our header is 64 bytes
 HEADER = 64
-FORMAT = 'utf-8'
+FORMAT = 'raw_unicode_escape'
 
 # This gets the local IPv4 address automatically without hard-coding it into the app
 SERVER = socket.gethostbyname(socket.gethostname())
@@ -32,8 +35,32 @@ def receive(sock):
     msg_length = sock.recv(HEADER).decode()
     if msg_length:
         msg_length = int(msg_length)
-        msg = sock.recv(msg_length).decode(FORMAT)
+        msg = sock.recv(msg_length)
+        try:
+            msg = msg.decode(FORMAT)
+        except:
+            print(type(msg))
         return msg
+
+
+def receive_wrapper(conn):
+    msg = receive(conn)
+    a = 193
+    nonce = 15
+    key = a.to_bytes(BLOCK_SIZE, 'big')
+    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
+    try:
+        if ']:\t' in msg:
+            both = msg.split(']:\t')
+            head = both[0] + ']:\t'
+            rest = both[1]
+            print(f'Encrypted:{rest}')
+            rest = cipher.decrypt(bytes(rest, FORMAT)).decode(FORMAT)
+            msg = head + rest
+    except:
+        print(msg)
+        # msg = msg.split("b'")[1]
+    return msg
 
 
 # base networking class for client and server
