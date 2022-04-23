@@ -13,13 +13,22 @@ class Client(Yummy):
     def __init__(self):
         super().__init__()
 
+    def send_encrypted(self, msg):
+        msg_bits = msg.encode(FORMAT)
+        a = 193
+        nonce = 15
+        key = a.to_bytes(BLOCK_SIZE, 'big')
+        cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
+        out = str(cipher.encrypt(msg_bits), FORMAT)
+        self.send(out)
+
     # client just has one listening loop since it's only one connection to the server
     def handle_connection(self, conn, addr=None):
         # friends are the people who you are ok with seeing messages from
         friends = ['SERVER']
         while True:
             try:
-                message = receive(conn)
+                message = receive_wrapper(conn)
             except ConnectionResetError:
                 # this happens if/when the server closes a connection
                 # the break just stops the listening
@@ -60,7 +69,10 @@ class Client(Yummy):
         while True:
             try:
                 out = input('')
-                self.send(out)
+                if 'add' in out or 'del' in out or out == '.exit':
+                    self.send(out)
+                else:
+                    self.send_encrypted(out)
             except ConnectionAbortedError:
                 break
             except BrokenPipeError:
