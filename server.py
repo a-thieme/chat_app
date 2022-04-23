@@ -3,6 +3,7 @@ from common import *
 import threading
 
 conns_dict = {'-1': ''}
+keys = {}
 
 
 # create unique id that is greater than 0
@@ -42,6 +43,14 @@ class Server(Yummy):
             if tmp != '':
                 self.send(f'[SERVER]: Updated available connections as IDs:\n{tmp}', conns_dict[person])
 
+    def send_keys(self):
+        for person in conns_dict:
+            if person == '-1':
+                continue
+            for key in keys:
+                if key != person:
+                    self.send(f'[SERVER][KEY] {key}:{keys[key]}', conns_dict[person])
+
     # server logic for every individual connection/user
     def handle_connection(self, conn, addr=None):
         print(f"[NEW CONNECTIONS] {addr} connected.")
@@ -52,6 +61,7 @@ class Server(Yummy):
         print(f'[ID GENERATED]: {conn_id} for {addr}')
         # send user its given ID
         self.send(f'[SERVER]: Your ID is {conn_id}.', conn)
+        self.send(f'[SERVER][DH] {PRIME}:{ROOT}', conn)
         # send a "help/readme" message
         self.send('[SERVER]: To make a new connection, use "add <id>"\n[SERVER]: To remove an existing connection, '
                   'use "del '
@@ -86,7 +96,12 @@ class Server(Yummy):
                         'placeholder'
                     break
                 # adding a connection
-                if message.startswith('add '):
+                if message.startswith('[KEY]: '):
+                    tmp = message.replace('[KEY]: ', '')
+                    keys[conn_id] = tmp
+                    print(keys)
+                    self.send_keys()
+                elif message.startswith('add '):
                     # maybe is just the id that we think they wanted to add
                     maybe = message.split('add ')[1]
                     if maybe in conns_dict:
@@ -107,15 +122,20 @@ class Server(Yummy):
                     else:
                         self.send('[SERVER]: twas not a valid ID', conn)
                 else:
+                    try:
+                        send_to = message.split('[')[1].split(']')[0]
+                    except:
+                        break
+                    message = message.split('\t')[1]
                     # broadcast message to everyone you're talking to
-                    for person in talking_to:
-                        if person != '-1':
+                    if send_to in talking_to:
+                        if send_to != '-1':
                             # for all people, send them message with [your-id] at the beginning
                             try:
-                                self.send(f'[{conn_id}]:\t{message}', conns_dict[person])
+                                self.send(f'[{conn_id}]:\t{message}', conns_dict[send_to])
                             # sometimes users aren't removed when they disconnect, so this handles that
                             except KeyError:
-                                talking_to.remove(person)
+                                talking_to.remove(send_to)
                         # you're sending to chat room
                         else:
                             # send to every person in connections other than yourself

@@ -1,3 +1,5 @@
+import time
+
 from common import *
 import threading
 
@@ -10,17 +12,19 @@ def start():
 
 
 class Client(Yummy):
+    secret = None
+    prime = None
+    keys = {}
     def __init__(self):
         super().__init__()
 
-    def send_encrypted(self, msg):
+    def send_encrypted(self, msg, sending_to):
         msg_bits = msg.encode(FORMAT)
-        a = 193
-        nonce = 15
-        key = a.to_bytes(BLOCK_SIZE, 'big')
+        nonce = 152
+        key = self.keys[sending_to].to_bytes(BLOCK_SIZE, 'big')
         cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
         out = str(cipher.encrypt(msg_bits), FORMAT)
-        self.send(out)
+        self.send(f'[{sending_to}]\t{out}')
 
     # client just has one listening loop since it's only one connection to the server
     def handle_connection(self, conn, addr=None):
@@ -28,11 +32,25 @@ class Client(Yummy):
         friends = ['SERVER']
         while True:
             try:
-                message = receive_wrapper(conn)
+                message = receive(conn)
+                nonce = 152
+                incoming = message.split('[')[1].split(']')[0]
+                if incoming in self.keys:
+                    key = self.keys[incoming].to_bytes(BLOCK_SIZE, 'big')
+                    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
+                    if ']:\t' in message:
+                        print(f'{message}\t(encrypted)')
+                        both = message.split(']:\t')
+                        head = both[0] + ']:\t'
+                        rest = both[1]
+                        rest = cipher.decrypt(bytes(rest, FORMAT)).decode(FORMAT)
+                        message = head + rest + ' (decrypted)'
             except ConnectionResetError:
                 # this happens if/when the server closes a connection
                 # the break just stops the listening
                 # I don't know if this is necessary, but I know it works like this
+                break
+            except:
                 break
             # if message exists
             if message:
@@ -50,6 +68,19 @@ class Client(Yummy):
                 # this gets the id of the connection sending the message
                 sender_id = message.split('[')[1].split(']')[0]
                 # if the id was one we added, it'll show message, otherwise say that user wants to talk
+                if '[SERVER][DH] ' in message:
+                    tmp = message.split(' ')[1]
+                    prime, root = tmp.split(':')
+                    prime = int(prime)
+                    root = int(root)
+                    self.secret = randint(1, prime)
+                    self.send(f'[KEY]: {(root ** self.secret) % prime}')
+                    self.prime = prime
+                elif '[SERVER][KEY] ' in message:
+                    eyedee, key = message.split(' ')[1].split(':')
+                    key = int(key)
+                    key = (key ** self.secret) % self.prime
+                    self.keys[eyedee] = key
                 if sender_id in friends:
                     print(message)
                 else:
@@ -66,21 +97,35 @@ class Client(Yummy):
         t.start()
         # user input that sends to server
         # breaks on bad connections (connection was stopped by server)
+        time.sleep(0.5)
         while True:
             try:
+                connection = input('')
+                if '.exit' in connection:
+                    self.send('.exit')
+                    break
                 out = input('')
-                if 'add' in out or 'del' in out or out == '.exit':
+                if '.exit' in out:
+                    self.send('.exit')
+                    break
+                if connection == 'server' or connection == '-1':
                     self.send(out)
                 else:
-                    self.send_encrypted(out)
+                    if connection in self.keys:
+                        self.send_encrypted(out, connection)
+                    else:
+                        print(f'did not find key for {connection}')
             except ConnectionAbortedError:
                 break
             except BrokenPipeError:
                 break
             except ValueError:
                 break
+            except:
+                break
 
 
 if __name__ == '__main__':
     print("Welcome to the ChatApp!")
+    print("Enter 'server' or any connection, press enter, then type your message you want to send and press enter again to send it.")
     Client()

@@ -1,11 +1,15 @@
 import socket
 
+from random import randint
 from Crypto.Cipher import AES
 
 # all of our global variables that both client and server use
 BLOCK_SIZE = 16
+# DH key exchange parameters
+PRIME = 3637
+ROOT = 202
 
-PORT = 5060
+PORT = 5064
 # Our header is 64 bytes
 HEADER = 64
 FORMAT = 'raw_unicode_escape'
@@ -43,22 +47,7 @@ def receive(sock):
         return msg
 
 
-def receive_wrapper(conn):
-    msg = receive(conn)
-    a = 193
-    nonce = 15
-    key = a.to_bytes(BLOCK_SIZE, 'big')
-    cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
-    if ']:\t' in msg:
-        print(f'{msg}\t(encrypted)')
-        both = msg.split(']:\t')
-        head = both[0] + ']:\t'
-        rest = both[1]
-        rest = cipher.decrypt(bytes(rest, FORMAT)).decode(FORMAT)
-        msg = head + rest + ' (decrypted)'
 
-        # msg = msg.split("b'")[1]
-    return msg
 
 
 # base networking class for client and server
