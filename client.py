@@ -32,19 +32,20 @@ class Client(Yummy):
                     print('You have disconnected. Please press ENTER to finish.')
                     break
                 # checks for if the server sent back a list of the connections you've added
-                if '[SERVER]: You are now talking' in message:
+                if '[SERVER]: You are now talking in/to ID(s)' in message:
+                    print(message)
                     # formatted with [id, id, id] at the end of the line
                     # gets just the id, id, id
                     message = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
                     # updates friendly users based on the connections the server says we've made
                     friends = ['SERVER'] + (message.split(', '))
-                # everything should start with [id]
-                if message.startswith('['):
+                # # everything should start with [id]
+                else:
                     # this gets the id of the connection sending the message
                     sender_id = message.split('[')[1].split(']')[0]
                     # if the id was one we added, it'll show message, otherwise say that user wants to talk
                     if sender_id in friends:
-                        print(f'{message}')
+                        print(message)
                     else:
                         print(f'{sender_id} wants to talk....')
 
@@ -64,6 +65,8 @@ class Client(Yummy):
                 out = input('')
                 self.send(out)
             except ConnectionAbortedError:
+                break
+            except BrokenPipeError:
                 break
             except ValueError:
                 break
