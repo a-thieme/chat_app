@@ -33,21 +33,18 @@ class Client(Yummy):
                     break
                 # checks for if the server sent back a list of the connections you've added
                 if '[SERVER]: You are now talking in/to ID(s)' in message:
-                    print(message)
                     # formatted with [id, id, id] at the end of the line
                     # gets just the id, id, id
-                    message = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
+                    tmp = message.replace('[SERVER]', '').replace("'", '').split(' [')[1].split(']')[0]
                     # updates friendly users based on the connections the server says we've made
-                    friends = ['SERVER'] + (message.split(', '))
-                # # everything should start with [id]
+                    friends = ['SERVER'] + (tmp.split(', '))
+                # this gets the id of the connection sending the message
+                sender_id = message.split('[')[1].split(']')[0]
+                # if the id was one we added, it'll show message, otherwise say that user wants to talk
+                if sender_id in friends:
+                    print(message)
                 else:
-                    # this gets the id of the connection sending the message
-                    sender_id = message.split('[')[1].split(']')[0]
-                    # if the id was one we added, it'll show message, otherwise say that user wants to talk
-                    if sender_id in friends:
-                        print(message)
-                    else:
-                        print(f'{sender_id} wants to talk....')
+                    print(f'{sender_id} wants to talk....')
 
         # ends this thread after loop is done
         exit()
