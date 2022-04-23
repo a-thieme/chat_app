@@ -49,16 +49,14 @@ def receive_wrapper(conn):
     nonce = 15
     key = a.to_bytes(BLOCK_SIZE, 'big')
     cipher = AES.new(key, AES.MODE_EAX, nonce=nonce.to_bytes(BLOCK_SIZE, 'big'))
-    try:
-        if ']:\t' in msg:
-            both = msg.split(']:\t')
-            head = both[0] + ']:\t'
-            rest = both[1]
-            print(f'Encrypted:{rest}')
-            rest = cipher.decrypt(bytes(rest, FORMAT)).decode(FORMAT)
-            msg = head + rest
-    except:
-        print(msg)
+    if ']:\t' in msg:
+        print(f'{msg}\t(encrypted)')
+        both = msg.split(']:\t')
+        head = both[0] + ']:\t'
+        rest = both[1]
+        rest = cipher.decrypt(bytes(rest, FORMAT)).decode(FORMAT)
+        msg = head + rest + ' (decrypted)'
+
         # msg = msg.split("b'")[1]
     return msg
 
